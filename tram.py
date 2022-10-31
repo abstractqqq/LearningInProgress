@@ -4,7 +4,6 @@
 # tram fails with some probability . If it fails, we don't move but we also lose time.
 # how to travel from 1 to n in the least time?
 from enum import Enum
-from faulthandler import is_enabled
 import numpy as np
 
 class Action(Enum):
@@ -69,16 +68,15 @@ def value_iteration(mdp:TransportationMDP, epsilon:float=1e-5):
         )
     
     while True:
-        vs = np.zeros(mdp.N)
+        old_v = v.copy()
         # Updating value of state
-        for s in all_states:
+        for i,s in enumerate(all_states):
             # updating value of state and policy
             if not mdp.is_end(s):
-                vs[s - offset] = max(Q(s, a) for a in mdp.actions_at_state(s)) # using current V
+                v[i] = max(Q(s, a) for a in mdp.actions_at_state(s)) # using current V
         # check convergence
-        if np.max(np.abs(v-vs)) < epsilon:
-            break 
-        v = vs
+        if np.max(np.abs(v-old_v)) < epsilon:
+            break
     
     # return policy, computed using the best V
     return [Action.NONE if mdp.is_end(s) else max(((Q(s, a), a) for a in mdp.actions_at_state(s)), key = lambda x:x[0])[1]\
